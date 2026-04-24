@@ -1,4 +1,4 @@
-pub type Key = u8;
+pub type Key = usize;
 
 #[derive(Debug)]
 struct Node {
