@@ -1,3 +1,6 @@
+#[path = "Hash_tabela.rs"]
+pub mod hash_tabela;
+
 pub type Key = usize;
 
 #[derive(Debug)]
@@ -26,8 +29,8 @@ pub struct AvlTree {
 
 impl AvlTree {
 	pub fn new() -> Self {
-		Self::default()
-	}
+        AvlTree { root: None }
+    }
 
 	pub fn insert(&mut self, key: Key) {
 		self.root = Self::insert_node(self.root.take(), key);
