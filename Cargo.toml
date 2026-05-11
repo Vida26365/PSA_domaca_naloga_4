@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
-path = "src/AVL_drevo.rs"
+path = "src/main.rs"
 
 [profile.dev]
 debug = true

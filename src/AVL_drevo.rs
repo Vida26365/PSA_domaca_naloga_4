@@ -1,9 +1,3 @@
-#[path = "Hash_tabela.rs"]
-pub mod hash_tabela;
-
-#[path = "Bently-Saxe.rs"]
-pub mod bentley_saxe;
-
 pub type Key = usize;
 
 #[derive(Debug)]
