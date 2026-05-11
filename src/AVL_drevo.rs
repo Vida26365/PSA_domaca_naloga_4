@@ -1,6 +1,9 @@
 #[path = "Hash_tabela.rs"]
 pub mod hash_tabela;
 
+#[path = "Bently-Saxe.rs"]
+pub mod bentley_saxe;
+
 pub type Key = usize;
 
 #[derive(Debug)]
@@ -73,13 +76,13 @@ impl AvlTree {
 	}
 
 	fn rebalance(mut node: Box<Node>) -> Box<Node> {
-		let balance = Self::balance_factor(&node);
+		let balance = Self::razlika_leva_desna(&node);
 
 		if balance > 1 {
 			let left_balance = node
 				.left
 				.as_ref()
-				.map_or(0, |left| Self::balance_factor(left));
+				.map_or(0, |left| Self::razlika_leva_desna(left));
 
 			if left_balance < 0 {
 				let left = node.left.take().expect("left child must exist");
@@ -93,7 +96,7 @@ impl AvlTree {
 			let right_balance = node
 				.right
 				.as_ref()
-				.map_or(0, |right| Self::balance_factor(right));
+				.map_or(0, |right| Self::razlika_leva_desna(right));
 
 			if right_balance > 0 {
 				let right = node.right.take().expect("right child must exist");
@@ -107,6 +110,14 @@ impl AvlTree {
 	}
 
 	fn rotate_left(mut z: Box<Node>) -> Box<Node> {
+//	z < t2 < y	
+//
+//		z				y
+//	   / \			   / \
+//		  y	   -->	  z	  
+//		 / \		 / \	
+//	   t2				t2
+//
 		let mut y = z.right.take().expect("right child must exist");
 		let t2 = y.left.take();
 
@@ -120,6 +131,14 @@ impl AvlTree {
 	}
 
 	fn rotate_right(mut z: Box<Node>) -> Box<Node> {
+//	y < t3 < z	
+//
+//		z				y
+//	   / \			   / \
+//	  y   	   -->	      z	  
+//	 / \   			 	 / \	
+//	   t3			    t3
+//
 		let mut y = z.left.take().expect("left child must exist");
 		let t3 = y.right.take();
 
@@ -140,7 +159,7 @@ impl AvlTree {
 		node.as_ref().map_or(0, |n| n.height)
 	}
 
-	fn balance_factor(node: &Node) -> i32 {
+	fn razlika_leva_desna(node: &Node) -> i32 {
 		Self::height(&node.left) - Self::height(&node.right)
 	}
 }
