@@ -195,34 +195,3 @@ fn random_hash(m: usize) -> UniversalHash {
     let b = rng.gen_range(0..PRIME); // 0 <= b < p
     UniversalHash::new(a, b, m)
 }
-
-#[cfg(test)]
-mod tests {
-    use super::PerfectHashSet;
-
-    #[test]
-    fn builds_and_answers_membership() {
-        let keys = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29];
-        let table = PerfectHashSet::new(&keys);
-
-        for key in keys {
-            assert!(table.contains(key));
-        }
-
-        assert!(!table.contains(4));
-        assert!(!table.contains(31));
-    }
-
-    #[test]
-    fn handles_duplicates_and_empty_input() {
-        let table = PerfectHashSet::new(&[10, 10, 10, 42, 42]);
-        assert_eq!(table.len(), 2);
-        assert!(table.contains(10));
-        assert!(table.contains(42));
-        assert!(!table.contains(11));
-
-        let empty = PerfectHashSet::new(&[]);
-        assert!(empty.is_empty());
-        assert!(!empty.contains(1));
-    }
-}

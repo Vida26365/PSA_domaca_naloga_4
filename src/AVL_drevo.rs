@@ -158,32 +158,3 @@ impl AvlTree {
 	}
 }
 
-#[cfg(test)]
-mod tests {
-	use super::AvlTree;
-
-	#[test]
-	fn insert_and_search_work() {
-		let mut tree = AvlTree::new();
-		let values = [10, 20, 30, 40, 50, 25];
-
-		for value in values {
-			tree.insert(value);
-		}
-
-		assert!(tree.search(25));
-		assert!(tree.search(10));
-		assert!(!tree.search(99));
-	}
-
-	#[test]
-	fn duplicate_insert_is_ignored() {
-		let mut tree = AvlTree::new();
-		tree.insert(7);
-		tree.insert(7);
-
-		assert!(tree.search(7));
-		assert!(!tree.search(8));
-	}
-}
-

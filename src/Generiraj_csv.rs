@@ -1,20 +1,12 @@
-#[path = "Hash_tabela.rs"]
-pub mod hash_tabela;
-
-#[path = "Bently-Saxe.rs"]
-pub mod bentley_saxe;
-
-#[path = "AVL_drevo.rs"]
-pub mod avl_drevo;
-
-use bentley_saxe::BentleySaxeDynamicHashSet;
-use avl_drevo::AvlTree;
+use super::bentley_saxe::BentleySaxeDynamicHashSet;
+use super::avl_drevo::AvlTree;
+use super::speed_hash_table::SpeedPerfectHashSet;
 use std::time::{Duration, Instant};
-use std::fs::File;
-use std::io::Write;
 use rand::seq::SliceRandom;
 
-fn time_function<F, T>(function: F) -> (T, Duration)
+
+/// Funkcija za merjenje časa poljubne funkcije
+pub fn time_function<F, T>(function: F) -> (T, Duration)
 where
 	F: FnOnce() -> T,
 {
@@ -23,14 +15,19 @@ where
 	(result, start.elapsed())
 }
 
-fn generate_random_numbers(n: usize) -> Vec<usize> {
+/// Vrne premešana števila od 1 do vključno n
+pub fn generate_random_numbers(n: usize) -> Vec<usize> {
 	let mut numbers: Vec<usize> = (1..=n).collect();
 	let mut rng = rand::thread_rng();
 	numbers.shuffle(&mut rng);
 	numbers
 }
 
-fn generate_csv(path: &str, max_n: usize) -> std::io::Result<()> {
+
+pub fn generate_csv(path: &str, max_n: usize) -> std::io::Result<()> {
+	use std::fs::File;
+	use std::io::Write;
+	
 	let mut file = File::create(path)?;
 	writeln!(
 		file,
@@ -38,9 +35,19 @@ fn generate_csv(path: &str, max_n: usize) -> std::io::Result<()> {
 	)?;
 
 	for n in (100..=max_n).step_by(100) { 
+        
         let m = n/2;
+        // n... koliko elementov vstavimo
+        // m ... koliko elementov iščemo
 		let random_numbers = generate_random_numbers(n);
 		let search_numbers = generate_random_numbers(m);
+
+        /////////////////////////////////////////////////////////////////////////////////////////////
+        // Primerjava poteka tako, da najprej vstavimo n naključno urejenih elementov v strukturo  //
+        // Izmerimo koliko časa traja vstavljanje. Nato v isti strukturi poiščemo m naključnih     //
+        // elementov in izmerimo koliko časa to vzame.                                             //
+        // Tako naredimo za obe strukturi in zapišemo podatke v csv.                               //
+        /////////////////////////////////////////////////////////////////////////////////////////////
 		
 		// AVL tree
 		let (avl_tree, avl_insert_elapsed) = time_function(|| {
@@ -72,8 +79,6 @@ fn generate_csv(path: &str, max_n: usize) -> std::io::Result<()> {
 			}
 		});
 		
-		// SpeedPerfectHashSet
-		// (removed - file doesn't exist yet)
 		
 		writeln!(
 			file,
@@ -87,11 +92,4 @@ fn generate_csv(path: &str, max_n: usize) -> std::io::Result<()> {
 	}
 	
 	Ok(())
-}
-
-fn main() {
-	if let Err(error) = generate_csv("data.csv", 100000) {
-		eprintln!("failed to write benchmark csv: {error}");
-		std::process::exit(1);
-	}
 }
