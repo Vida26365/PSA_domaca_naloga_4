@@ -70,14 +70,13 @@ for _ in 0..MAX_TOP_LEVEL_TRIES {
 	...
 }
 ```
-Pričakovana vrednost kolikokrat se to zgodi je TODO (mislm da je 2). 
 Ko najdemo vrhno hash funkcijo, lahko gremo iskati hash funkcije za vedra, ki nimajo trkov. Funkcija `build_bucket` sestavi vedro z hash funkcijo brez trkov. Če ne uspe sestaviti take funkcije, vrne `None`, vendar je vrjetnost da se to zgodi zanemarljiva. 
 ``` rs
 let mut buckets = Vec::with_capacity(m);
 let mut success = true;
 
 for stvari_v_vedru in partitioned { // Preverimo da ni trkov
-	match build_bucket(&stvari_v_vedru) { // E(TODO) * O(len(vedro_i))
+	match build_bucket(&stvari_v_vedru) { // E * O(len(vedro_i))
 		Some(bucket) => buckets.push(bucket), 
 		None => {
 			success = false;
@@ -86,7 +85,7 @@ for stvari_v_vedru in partitioned { // Preverimo da ni trkov
 	}
 }
 ```
-Ker je $ E(TODO) \in O(1) $ je časovna zahtevost funkcije `new` enaka $ O( n \cdot \log(n) + n + m + m \cdot \text{len}({vedro_i})) = O( n \cdot log n) $
+Ker je pričakovana vrednost ustavitve zanke $ O(1) $ je časovna zahtevost funkcije `new` enaka $ O( n \cdot \log(n) + n + m + m \cdot \text{len}({vedro_i})) = O( n \cdot log n) $
 
 
 ### `len` (Koliko elementov je v strukturi)
@@ -155,9 +154,9 @@ fn promote_level(&mut self, mut elements: Vec<Key>, level: usize) {
 		self.levels.push(None); // dodamo nov level za v prihodnost
 	}
 
-	// If current level is empty, place the structure there
+	// Če je level prazen, smo našli mesto za vstavitit strukturo
 	if self.levels[level].is_none() {
-		let structure = S::from_keys(&elements); // O(2^{level} * log (2 * 2^{level}))
+		let structure = S::from_keys(&elements); // O(2^{level} * log (2 * 2^{level})) (zaradi urejanja elementov)
 		self.levels[level] = Some(structure);
 	} else {
 		let existing_structure = self.levels[level].take().unwrap();
@@ -166,9 +165,17 @@ fn promote_level(&mut self, mut elements: Vec<Key>, level: usize) {
 	}
 }
 ```
-`promote_level` je rekurzivna funkcija. Največ časa bi potrebovala, če bi bili vsi nivoji zasedeni. Torej $ O(2^{\log(n)} \cdot \log( 2 \cdot 2^{\log(n)})) + \sum_{i=1}^{\log(n)}2^i = O(n \cdot \log(n) + n) = O(n \cdot \log(n)) $ 
-
-TODO: Amortizirano
+`promote_level` je rekurzivna funkcija. Največ časa bi potrebovala, če bi bili vsi nivoji zasedeni. Torej 
+$$ 
+O(2^{\log(n)} \cdot \log( 2 \cdot 2^{\log(n)})) + \sum_{i=1}^{\log(n)}2^i = O(n \cdot \log(n) + n) = O(n \cdot \log(n))  
+$$.
+Ampak amortiziano po skoraj enakem postopku kot iz predavanj dobimo:
+$$
+C \cdot n =n + \sum_{i = 1}^{\lfloor \log(n) \rfloor} 2^i \cdot {\log(2^i)} = 
+n + \sum_{i = 1}^{\lfloor \log(n) \rfloor} 2^i \cdot i = 
+2 (1 - 2^{\log(n)} + 2^{\log(n)} \cdot \log(n)) \leq 2 + 2 n \log(n)
+$$
+Zato je amortiziran čas vstavljanja $ O(\log(n)) $
 
 
 ## AVL drevo
