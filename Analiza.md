@@ -167,8 +167,8 @@ fn promote_level(&mut self, mut elements: Vec<Key>, level: usize) {
 ```
 `promote_level` je rekurzivna funkcija. Največ časa bi potrebovala, če bi bili vsi nivoji zasedeni. Torej 
 $$ 
-O(2^{\log(n)} \cdot \log( 2 \cdot 2^{\log(n)})) + \sum_{i=1}^{\log(n)}2^i = O(n \cdot \log(n) + n) = O(n \cdot \log(n))  
-$$.
+O(2^{\log(n)} \cdot \log( 2 \cdot 2^{\log(n)})) + \sum_{i=1}^{\log(n)}2^i = O(n \cdot \log(n) + n) = O(n \cdot \log(n)).
+$$
 Ampak amortiziano po skoraj enakem postopku kot iz predavanj dobimo:
 $$
 C \cdot n =n + \sum_{i = 1}^{\lfloor \log(n) \rfloor} 2^i \cdot {\log(2^i)} = 
