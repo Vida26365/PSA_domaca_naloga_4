@@ -69,6 +69,20 @@ pub struct PerfectHashSet {
     keys: Vec<u64>,
 }
 
+
+
+/// Ima vrhnji hash, ki najde vedo, nato pa še en hash, ki najde mesto v vedru
+/// |1| [.]
+/// |2| [. . . .]
+/// |0| []
+/// |0| []
+/// |3| [. . . . . . . . .]
+/// |0| []
+/// 
+/// n ... število vseh elementov
+/// k_i ... število elementov v i-tem vedru
+/// 
+/// velikost vrhnje tabele je n, velikost vedr je enako k_i^2
 impl PerfectHashSet {
     pub fn new(keys: &[u64]) -> Self {
         let mut unique: Vec<u64> = keys.to_vec();
@@ -113,7 +127,8 @@ impl PerfectHashSet {
             for stvari_v_vedru in partitioned {
                 // Preverimo da ni trkov
                 match build_bucket(&stvari_v_vedru) {
-                    Some(bucket) => buckets.push(bucket), // vrstni red vedrov je isti kot vrstni red v partitioned, ker se vedno izvede Some del, ker drugače probamo še enkrat. Ampak to se nikoli ne zgodi, ker hashi v vedrih poskrbijo za to.
+                    // vrstni red vedrov je isti kot vrstni red v partitioned, ker se vedno izvede Some del, ker drugače probamo še enkrat. Ampak to se nikoli ne zgodi, ker hashi v vedrih poskrbijo za to.
+                    Some(bucket) => buckets.push(bucket),
                     None => {
                         success = false;
                         break;
@@ -134,14 +149,11 @@ impl PerfectHashSet {
         panic!("failed to build perfect hash table after multiple attempts");
     }
 
-    pub fn len(&self) -> usize {
-        self.size
-    }
-
     pub fn is_empty(&self) -> bool {
         self.size == 0
     }
 
+    // O(1)
     pub fn contains(&self, key: u64) -> bool {
         if self.buckets.is_empty() {
             return false;
