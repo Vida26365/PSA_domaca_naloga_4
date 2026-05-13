@@ -1,34 +1,25 @@
 use crate::hash_tabela::PerfectHashSet;
+pub type BentleySaxeDynamicHashSet = BentleySaxe<PerfectHashSet>;
 
 pub type Key = u64;
 
-/// Trait that defines operations needed for a structure to be used with Bentley-Saxe construction
-/// Any data structure implementing this trait can be made semi-dynamic using BentleySaxe
+/// Lastnosti, ki morajo veljati za implementacijo statične strukture v dinamično z Bently-Saxovo transformacijo
 pub trait DynamicStructure: Sized {
-    /// Searches for a key in the structure
+    /// Ali je element vsebovan
     fn contains(&self, key: Key) -> bool;
     
-    /// Creates a new structure from a slice of keys
-    /// This is used during merging to build new structures
+    /// Ustvari novo strukturo iz elementov
     fn from_keys(keys: &[Key]) -> Self;
     
-    /// Returns the number of elements in the structure
-    /// Used for tracking purposes (optional, can just return a dummy value)
-    fn len(&self) -> usize {
-        0
-    }
     
-    /// Checks if the structure is empty
-    fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
+    /// Preveri če je struktura prazna
+    fn is_empty(&self) -> bool;
     
-    /// Extracts and returns all elements stored in the structure
-    /// Returns a vector containing all keys in this structure
+    /// Vrne vse elemente v strukturi
     fn get_elements(&self) -> Vec<Key>;
 }
 
-/// Implementation of DynamicStructure for PerfectHashSet
+/// DynamicStructure za PerfectHashSet
 impl DynamicStructure for PerfectHashSet {
     fn contains(&self, key: Key) -> bool {
         PerfectHashSet::contains(self, key)
@@ -38,8 +29,8 @@ impl DynamicStructure for PerfectHashSet {
         PerfectHashSet::new(keys)
     }
     
-    fn len(&self) -> usize {
-        PerfectHashSet::len(self)
+    fn is_empty(&self) -> bool {
+        PerfectHashSet::is_empty(&self)
     }
     
     fn get_elements(&self) -> Vec<Key> {
@@ -47,25 +38,22 @@ impl DynamicStructure for PerfectHashSet {
     }
 }
 
-/// Generic Bentley-Saxe construction that works with any structure implementing DynamicStructure
-/// 
-/// Maintains multiple levels, where level i contains 2^i elements.
-/// When inserting, merge levels as needed (similar to binary addition).
-/// 
-/// - Insertion: O(log n) amortized
-/// - Search: O(log n) - searches through at most log n levels
-/// - Space: O(n) same as storing all elements
+
+/// Bantly-Saxe struktura:
+/// vsak nivo strukture je lahko prazen, ali pa je tam zgoščena tabela velikosti 2^i
+/// [ . ]
+/// [ . . ]
+/// [ . . . .]
+/// [ . . . . . . . .]
+/// Implementacija podpira transformacijo poljubne strukture, ki implementira DynamicStructure. 
+/// V nadaljevanju bo ime tabela označevalo statično strukturo, struktura pa Bently-Saxovo transformacijo te statične strukture
 #[derive(Debug)]
 pub struct BentleySaxe<S: DynamicStructure> {
-    /// levels[i] contains a structure with 2^i elements, or None if empty
-    levels: Vec<Option<S>>,
-
-    /// Total number of unique elements in the structure
-    size: usize,
+    levels: Vec<Option<S>>, // vektor tabel
+    size: usize, // število vseh elementov
 }
 
 impl<S: DynamicStructure> BentleySaxe<S> {
-    /// Creates a new empty Bentley-Saxe structure
     pub fn new() -> Self {
         BentleySaxe {
             levels: Vec::new(),
@@ -73,41 +61,42 @@ impl<S: DynamicStructure> BentleySaxe<S> {
         }
     }
 
-    /// Inserts a new element into the structure
-    /// Time complexity: O(log n) amortized (O(log n) dup check + O(n log n) merge)
+    
     pub fn insert(&mut self, key: Key) {
-        // Don't insert duplicates - use search() for O(log n) lookup
+
+        // Pregled, če je ključ že v strukturi
         if self.search(key) {
             return;
         }
 
         self.size += 1;
 
-        // Promote through levels (similar to binary addition)
+        // Poskrbi za nivojanje
         self.promote_level(vec![key], 0);
     }
 
-    /// Recursively promotes and merges structures through levels
+    /// Gre čez nivoje in jih sporti prazni, dokler ne naleti na prazen nivo. 
+    /// Tja postavi tabelo z vsemi elementi iz nižjih nivojev
     fn promote_level(&mut self, mut elements: Vec<Key>, level: usize) {
-        // level ... v kater level ustavljamo strukturo
+        // level ... v kater nivo ustavljamo strukturo
 
         if level == self.levels.len() {
             self.levels.push(None); // dodamo nov level za v prihodnost
         }
 
-        // If current level is empty, place the structure there
+        // Ko najdemo prazen nivo, naredimo tabelo iz elementov, ki smo jih sproti nabrali 
         if self.levels[level].is_none() {
             let structure = S::from_keys(&elements);
             self.levels[level] = Some(structure);
         } else {
+            // Če je nivo poln, ga izpraznimo
             let existing_structure = self.levels[level].take().unwrap();
             elements.extend(existing_structure.get_elements());
             self.promote_level(elements, level + 1);
         }
     }
 
-    /// Searches for an element in the structure
-    /// Time complexity: O(log n) - gre čez log n levlov v O(1) na level
+    /// Iskanje elementa v strukturi
     pub fn search(&self, key: Key) -> bool {
         for level_structure in &self.levels {
             if let Some(structure) = level_structure {
@@ -119,50 +108,6 @@ impl<S: DynamicStructure> BentleySaxe<S> {
         false
     }
 
-    /// Returns the number of levels currently used
-    pub fn num_levels(&self) -> usize {
-        self.levels.iter().filter(|l| l.is_some()).count()
-    }
-
-    /// Returns the total number of elements in the structure
-    /// Time complexity: O(1)
-    pub fn len(&self) -> usize {
-        self.size
-    }
-
-    /// Checks if the structure is empty
-    pub fn is_empty(&self) -> bool {
-        self.size == 0
-    }
-
-    /// Rebuilds the entire structure to optimize space
-    /// Useful after many insertions to consolidate levels
-    /// Time complexity: O(n log n)
-    pub fn rebuild(&mut self) {
-        let elements = self.collect_all_elements();
-        *self = Self::new();
-        for elem in elements {
-            self.insert(elem);
-        }
-    }
-
-    /// Collects all elements from non-empty levels.
-    fn collect_all_elements(&self) -> Vec<Key> {
-        let mut elements = Vec::with_capacity(self.size);
-        for level in &self.levels {
-            if let Some(structure) = level {
-                elements.extend(structure.get_elements());
-            }
-        }
-        elements
-    }
-}
-
-impl<S: DynamicStructure> Default for BentleySaxe<S> {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 
-pub type BentleySaxeDynamicHashSet = BentleySaxe<PerfectHashSet>;
