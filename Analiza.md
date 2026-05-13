@@ -1,4 +1,6 @@
 # Podrobna analiza časovne kompleksnosti
+To je analiza časovne zahtevnosti. Za ogled primerjave rezultatov si poglejte datoteko [rezultati.ipynb](rezultati.ipynb).
+
 
 ## Hash tabela
 Pri Bently-Saxovi konstrukciji se uporabi le funkcije, ki jih implementira lastnost `DynamicStructure` 
