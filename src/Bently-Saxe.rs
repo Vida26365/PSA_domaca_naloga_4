@@ -163,3 +163,6 @@ impl<S: DynamicStructure> Default for BentleySaxe<S> {
         Self::new()
     }
 }
+
+
+pub type BentleySaxeDynamicHashSet = BentleySaxe<PerfectHashSet>;
